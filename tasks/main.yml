@@ -1,0 +1,73 @@
+---
+
+- name: 'Installing LampStack Packages'
+  yum:
+    name:
+      - httpd
+      - php
+      - php-mysql
+      - mariadb-server
+      - MySQL-python
+    state: present
+
+- name: 'Httpd - Creating Virtualhost'
+  template:
+    src: virtualhost.j2 
+    dest: "/etc/httpd/conf.d/{{domain}}.conf"
+            
+- name: 'Httpd - Creating DocumentRoot'
+  file:
+    path: "/var/www/html/{{domain}}"
+    state: directory
+        
+- name: 'Httpd - Creating info.html'
+  copy:
+    src: info.html
+    dest: "/var/www/html/{{domain}}/index.html"
+            
+- name: 'Httpd - Creating info.php'
+  copy:
+    src: info.php
+    dest: "/var/www/html/{{domain}}/index.php"  
+        
+- name: 'LampStack - Service restart'
+  service:
+    name: "{{item}}"
+    state: restarted
+    enabled: yes
+  with_items:
+    - httpd
+    - mariadb
+        
+- name: "MariaDB - Restting RootPassword"
+  ignore_errors: yes
+  mysql_user:
+    login_user: root
+    login_password: ''
+    name: root
+    host_all: yes
+    password: "{{ mysql_root}}"
+            
+- name: "MariaDb - Removing Anonymous Users."
+  mysql_user:
+    login_user: root
+    login_password: "{{ mysql_root}}"
+    name: ''
+    host_all: yes
+    state: absent
+
+- name: 'MariaDb - Creating Wordpress Database'
+  mysql_db:
+    login_user: root
+    login_password: "{{mysql_root}}"
+    db: "{{ wordpress_database }}"
+    state: present
+            
+- name: 'MariaDb - Creating WordPress User and Privileges'
+  mysql_user:
+    login_user: root
+    login_password: "{{mysql_root}}"
+    name: "{{wordpress_user}}"
+    host: localhost
+    password: "{{wordpress_password}}"
+    priv: "{{wordpress_database}}.*:ALL"

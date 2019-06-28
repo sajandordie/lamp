@@ -1,0 +1,7 @@
+---
+
+domain: www.sajan.com
+mysql_root: mysql123
+wordpress_user: wordpress
+wordpress_password: wordpress123
+wordpress_database: wordpress
